@@ -1,0 +1,43 @@
+# Salesforce Development Rules
+
+Whenever you are asked to develop or modify Salesforce metadata, you MUST automatically follow these guidelines:
+
+---
+
+## 1. Custom Objects & Fields (Permissions & Layouts)
+When creating a new Custom Object or Custom Field:
+1. **System Administrator Access**: Retrieve `Profile:Admin` using `retrieve_metadata`, append the appropriate `<objectPermissions>` (CRUD) or `<fieldPermissions>` (FLS Read/Write) elements to `force-app/main/default/profiles/Admin.profile-meta.xml`, and deploy.
+2. **Page Layout placement**: Retrieve the layout, append the new field under the default `<layoutColumns>` section in the object's page layout, and deploy.
+3. **Transaction deploy**: Try to deploy the object, fields, layouts, and profile together in one call.
+
+---
+
+## 2. Apex Code Quality & Standards
+*   **Trigger Handler Pattern**: Never write business logic directly inside trigger files. Always delegate to a Trigger Handler Class (e.g. `AccountTriggerHandler.cls`).
+*   **Bulkification**:
+    *   No SOQL queries inside loops.
+    *   No DML statements (insert, update, delete) inside loops.
+    *   Always process records in bulk using collections (Lists, Sets, Maps).
+*   **Security (FLS/CRUD & Sharing)**:
+    *   Always specify sharing keywords on classes (`with sharing` or `inherited sharing`).
+    *   Ensure proper database security checks (e.g., use `WITH USER_MODE` in SOQL queries or verify access before DML).
+
+---
+
+## 3. Apex Testing Requirements
+*   **Mandatory Test Classes**: Every Apex Class or Trigger must have a corresponding test class (e.g. `AccountServiceTest.cls`) aiming for **85%+ code coverage**.
+*   **Test Data Factory**: Create test data using `@TestSetup` methods or a Test Data Factory class rather than creating data inside individual test methods.
+*   **Meaningful Assertions**: Always use `Assert.areEqual(expected, actual)` or `System.assertEquals()` to verify business outcomes. Never write empty test methods or tests without assertions.
+
+---
+
+## 4. Lightning Web Components (LWC)
+*   **Standard LDS Preference**: Prefer Lightning Data Service (LDS) or wire adapters (`lightning/uiRecordApi`) over custom Apex controllers for CRUD operations to leverage automatic caching and refresh.
+*   **Apex AuraEnabled Caching**: If using Apex, mark read-only methods as `@AuraEnabled(cacheable=true)` and handle errors gracefully using `AuraHandledException`.
+*   **Error Handling**: LWCs must display errors gracefully to users (e.g., using `ShowToastEvent`).
+
+---
+
+## 5. Git & Workspace Hygiene
+*   **Git Status Check**: Check `git_status` before starting work to avoid modifying unstaged dirty files.
+*   **Atomic Commits**: After a successful deployment to Salesforce, automatically stage and commit the modified files with a descriptive, professional commit message.
